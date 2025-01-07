@@ -4,8 +4,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -112,7 +114,6 @@ fun JokeCard(joke: Joke) {
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-
             Text(
                 text = joke.category,
                 style = MaterialTheme.typography.labelMedium,
@@ -120,37 +121,32 @@ fun JokeCard(joke: Joke) {
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             
-            when (joke.type) {
-                "single" -> {
-                    Text(
-                        text = joke.joke,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                }
-                "twopart" -> {
-                    Text(
-                        text = joke.setup,
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    Text(
-                        text = joke.delivery,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-            
+            Text(
+                text = joke.getJokeText(),
+                style = MaterialTheme.typography.bodyLarge
+            )
 
-            if (!joke.safe) {
-                Icon(
-                    imageVector = Icons.Default.Warning,
-                    contentDescription = "Content warning",
-                    tint = MaterialTheme.colorScheme.error,
-                    modifier = Modifier
-                        .padding(top = 8.dp)
-                        .size(16.dp)
-                )
+            if (!joke.safe || joke.flags.hasSensitiveContent()) {
+                Row(
+                    modifier = Modifier.padding(top = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = "Content warning",
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    
+                    joke.flags.getSensitiveContentTypes().forEach { flagType ->
+                        Text(
+                            text = flagType,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
             }
         }
     }

@@ -20,6 +20,9 @@ class JokeViewModel : ViewModel() {
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
     
+    private val _showSensitiveContent = MutableStateFlow(false)
+    val showSensitiveContent: StateFlow<Boolean> = _showSensitiveContent
+    
     private val retrofit = Retrofit.Builder()
         .baseUrl("https://raw.githubusercontent.com/atilsamancioglu/ProgrammingJokesJSON/main/")
         .addConverterFactory(GsonConverterFactory.create())
@@ -31,6 +34,11 @@ class JokeViewModel : ViewModel() {
         fetchJokes()
     }
     
+    fun toggleSensitiveContent() {
+        _showSensitiveContent.value = !_showSensitiveContent.value
+        fetchJokes()
+    }
+    
     private fun fetchJokes() {
         viewModelScope.launch {
             try {
@@ -39,17 +47,12 @@ class JokeViewModel : ViewModel() {
                 
                 val fetchedJokes = api.getJokes()
                 _jokes.value = fetchedJokes.filter { joke ->
-                    when (joke.type) {
-                        "single" -> joke.joke.isNotEmpty()
-                        "twopart" -> joke.setup.isNotEmpty() && joke.delivery.isNotEmpty()
-                        else -> false
-                    }
+                    !joke.error && joke.isDisplayable() && 
+                    (!joke.flags.hasSensitiveContent() || _showSensitiveContent.value)
                 }
-                println("Jokes fetched successfully: ${fetchedJokes.size} jokes")
+                
             } catch (e: Exception) {
                 _error.value = e.message ?: "An unknown error occurred"
-                println("Error fetching jokes: ${e.message}")
-                e.printStackTrace()
             } finally {
                 _isLoading.value = false
             }
