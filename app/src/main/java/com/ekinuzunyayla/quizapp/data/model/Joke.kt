@@ -50,12 +50,27 @@ data class Joke(
         else -> false
     }
     
+    // Kategori adını güvenli bir şekilde al
+    fun getCategoryText(): String = category.ifBlank { "Programming" }
+    
     // Şaka metnini güvenli bir şekilde al
-    fun getJokeText(): String = when(type) {
-        "single" -> joke ?: "No joke available"
-        "twopart" -> "${setup ?: ""}\n${delivery ?: ""}"
-        else -> "Invalid joke type"
-    }.trim()
+    fun getJokeText(): String {
+        return when(type.lowercase()) {
+            "single" -> joke?.trim() ?: "No joke available"
+            "twopart" -> {
+                val setupText = setup?.trim() ?: ""
+                val deliveryText = delivery?.trim() ?: ""
+                
+                when {
+                    setupText.isBlank() && deliveryText.isBlank() -> "No joke available"
+                    setupText.isBlank() -> deliveryText
+                    deliveryText.isBlank() -> setupText
+                    else -> "$setupText\n\n$deliveryText"
+                }
+            }
+            else -> "Invalid joke type"
+        }
+    }
 }
 
 data class JokeFlags(
@@ -77,11 +92,9 @@ data class JokeFlags(
     @SerializedName("explicit")
     val explicit: Boolean = false
 ) {
-    // Şakanın hassas içerik içerip içermediğini kontrol et
     fun hasSensitiveContent(): Boolean = 
         nsfw || religious || political || racist || sexist || explicit
         
-    // Hassas içerik türlerini liste olarak al
     fun getSensitiveContentTypes(): List<String> = buildList {
         if (nsfw) add("NSFW")
         if (religious) add("Religious")
